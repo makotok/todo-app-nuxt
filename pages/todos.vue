@@ -6,9 +6,13 @@
       </a-button>
     </a-input-search>
     <a-table :columns="columns" :data-source="todos">
-      <span slot="action">
-        <a-button type="danger">Remove</a-button>
-      </span>
+      <template slot="done" slot-scope="text, record">
+        <a-icon v-if="record.status == 'Done'" type="check" />
+      </template>
+      <template slot="action" slot-scope="text, record">
+        <a-button v-if="record.status != 'Done'" type="primary" shape="circle" icon="check" @click="onDoneTodo(record)" />
+        <a-button type="danger" shape="circle" icon="delete" @click="onRemoveTodo(record)" />
+      </template>
     </a-table>
   </div>
 </template>
@@ -20,13 +24,26 @@ export default {
   data() {
     return {
       columns: [{
+        title: 'Done',
+        width: '10%',
+        dataIndex: 'status',
+        filters: [
+          { text: 'Done', value: 'Done' },
+          { text: 'Not Done', value: 'Not Done' }
+        ],
+        scopedSlots: { customRender: 'done' },
+        onFilter: (value, record) => record.status === value
+      }, {
         title: 'ID',
+        width: '10%',
         dataIndex: 'key'
       }, {
         title: 'Todo',
+        width: '60%',
         dataIndex: 'text'
       }, {
         title: 'Action',
+        width: '20%',
         scopedSlots: { customRender: 'action' }
       }],
       todoText: ''
@@ -39,8 +56,16 @@ export default {
   },
   methods: {
     addTodo(value) {
-      this.$store.commit('todos/add', value)
-      this.todoText = ''
+      if (value) {
+        this.$store.commit('todos/add', value)
+        this.todoText = ''
+      }
+    },
+    onDoneTodo(record) {
+      this.$store.commit('todos/done', record)
+    },
+    onRemoveTodo(record) {
+      this.$store.commit('todos/remove', record)
     },
     ...mapMutations({
       toggle: 'todos/toggle'
